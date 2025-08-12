@@ -6,6 +6,11 @@ app = Flask(__name__)
 CORS(app, supports_credentials=True)  # Allow cookies
 app.secret_key = "dev-secret-key"  # To be changed when deployed
 
+@app.route("/")
+def home():
+    return {"message": "Todo Backend is running!"}
+
+
 # Initialize DB
 models.init_db()
 
