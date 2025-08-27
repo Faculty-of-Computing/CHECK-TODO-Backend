@@ -1,10 +1,15 @@
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS
+import os
 import models
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True)  # Allow cookies
-app.secret_key = "dev-secret-key"  # To be changed when deployed
+
+# Enable CORS with support for cookies
+CORS(app, supports_credentials=True)
+
+# Use environment variable for secret key (fallback for local dev)
+app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key")
 
 @app.route("/")
 def home():
@@ -22,6 +27,7 @@ def signup():
         return jsonify({"message": "Account created successfully"}), 201
     return jsonify({"error": "Email already in use"}), 400
 
+
 @app.route("/login", methods=["POST"])
 def login():
     data = request.json
@@ -31,10 +37,12 @@ def login():
         return jsonify({"message": "Login successful"})
     return jsonify({"error": "Invalid credentials"}), 401
 
+
 @app.route("/logout", methods=["POST"])
 def logout():
     session.pop("user_id", None)
     return jsonify({"message": "Logged out"})
+
 
 # ----- TASKS -----
 @app.route("/tasks", methods=["GET"])
@@ -45,6 +53,7 @@ def get_tasks():
     tasks = models.get_tasks(user_id)
     return jsonify(tasks)
 
+
 @app.route("/tasks", methods=["POST"])
 def add_task():
     user_id = session.get("user_id")
@@ -53,6 +62,7 @@ def add_task():
     data = request.json
     models.add_task(user_id, data["title"])
     return jsonify({"message": "Task added"})
+
 
 @app.route("/tasks/<int:task_id>", methods=["PATCH"])
 def update_task(task_id):
@@ -63,6 +73,7 @@ def update_task(task_id):
     models.update_task_status(task_id, data["completed"], user_id)
     return jsonify({"message": "Task updated"})
 
+
 @app.route("/tasks/<int:task_id>", methods=["DELETE"])
 def delete_task(task_id):
     user_id = session.get("user_id")
@@ -70,6 +81,7 @@ def delete_task(task_id):
         return jsonify({"error": "Not logged in"}), 401
     models.delete_task(task_id, user_id)
     return jsonify({"message": "Task deleted"})
+
 
 if __name__ == "__main__":
     app.run(debug=True)
