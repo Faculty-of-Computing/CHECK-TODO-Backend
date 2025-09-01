@@ -33,23 +33,24 @@ def signup():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    username_or_email = data.get("username") or data.get("email")
-    password = data.get("password")
+    username = data.get('username')
+    password = data.get('password')
 
-    if not username_or_email or not password:
-        return jsonify({"error": "Missing fields"}), 400
+    if not username or not password:
+        return jsonify({"error": "Username and password required"}), 400
 
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM users WHERE (username=? OR email=?) AND password=?",
-                (username_or_email, username_or_email, password))
-    user = cur.fetchone()
+    conn = sqlite3.connect("database.db") 
+    c = conn.cursor()
+    c.execute("SELECT * FROM users WHERE username=?", (username,))
+    user = c.fetchone()
     conn.close()
 
-    if user:
-        return jsonify({"message": "Login successful", "user_id": user[0]}), 200
+    # Assuming your schema: id (0), username (1), email (2), password_hash (3)
+    if user and check_password_hash(user[3], password):  
+        return jsonify({"message": "Login successful!"}), 200
     else:
-        return jsonify({"error": "Invalid credentials"}), 401
+        return jsonify({"error": "Invalid username or password"}), 401
+
 
 
 # ========== TASK ROUTES ==========
